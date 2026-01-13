@@ -10,11 +10,14 @@ CFLAGS_RELEASE = $(CFLAGS_COMMON) -O2 -DNDEBUG
 # Default to debug
 CFLAGS = $(CFLAGS_DEBUG)
 
+SRC = src
+TESTS = tests
+
 # Raylib configuration
-RAYLIB_DIR = vendor/raylib/src
-RAYLIB_LIB = $(RAYLIB_DIR)/libraylib.a
-RAYLIB_INCLUDE = -I$(RAYLIB_DIR)
-RAYLIB_LINK = -L$(RAYLIB_DIR) -lraylib
+RAYLIB_DIR = raylib
+RAYLIB_LIB = $(RAYLIB_DIR)/lib/libraylib.a
+RAYLIB_INCLUDE = -I$(RAYLIB_DIR)/include
+RAYLIB_LINK = $(RAYLIB_LIB) 
 
 # Platform-specific frameworks (macOS)
 UNAME_S := $(shell uname -s)
@@ -43,19 +46,13 @@ gui: game_gui
 gui-release: CFLAGS = $(CFLAGS_RELEASE)
 gui-release: game_gui
 
-game_of_life: game.c
+game_of_life: $(SRC)/game.c
 	$(CC) $(CFLAGS) -o $@ $<
 
-test_game: test_game.c
+test_game: $(TESTS)/test_game.c
 	$(CC) $(CFLAGS) -o $@ $<
 
-# Build raylib static library if not present
-$(RAYLIB_LIB):
-	cd $(RAYLIB_DIR) && $(MAKE) PLATFORM=PLATFORM_DESKTOP
-
-raylib: $(RAYLIB_LIB)
-
-game_gui: game_gui.c $(RAYLIB_LIB)
+game_gui: $(SRC)/game_gui.c 
 	$(CC) $(CFLAGS) -o $@ $< $(RAYLIB_INCLUDE) $(RAYLIB_LINK) $(RAYLIB_FRAMEWORKS)
 
 run: game_of_life
