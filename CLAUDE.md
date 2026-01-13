@@ -8,12 +8,36 @@ Multi-language implementation of Conway's Game of Life - a cellular automaton wh
 
 ## Build and Run Commands
 
-### C
+### C (Terminal)
 ```bash
 cd C
 gcc -o game_of_life game.c
 ./game_of_life
 ```
+
+### C (GUI with raylib)
+```bash
+cd C
+
+# First time: build raylib (only needed once)
+cd vendor/raylib/src && make PLATFORM=PLATFORM_DESKTOP && cd ../../..
+
+# Compile game (macOS)
+clang -o game_gui game_gui.c -Ivendor/raylib/src -Lvendor/raylib/src -lraylib \
+  -framework OpenGL -framework Cocoa -framework IOKit -framework CoreAudio -framework CoreVideo
+
+# Compile game (Linux)
+gcc -o game_gui game_gui.c -Ivendor/raylib/src -Lvendor/raylib/src -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
+
+./game_gui
+```
+
+**GUI Controls:**
+- SPACE: Pause/Resume simulation
+- R: Randomize grid
+- C: Clear grid
+- Left Mouse: Draw alive cells
+- Right Mouse: Erase cells
 
 ### Ruby
 ```bash
@@ -63,8 +87,14 @@ Each implementation is a single self-contained file with consistent structure:
 - `get_cell` / `set_cell` - Cell access with coordinate wrapping
 - `count_alive_neighbors` / `get_alive_neighbors` - Count adjacent live cells
 - `next_state` / `compute_new_generation` - Apply Game of Life rules
-- `draw_board` / `print_grid` - Terminal display with ANSI clear codes
+- `draw_board` / `print_grid` / `draw_grid` - Display (terminal or GUI)
 - `randomize_state` / `randomize_grid` - Random initialization
+
+**C GUI Version (game_gui.c):**
+- Uses raylib for graphical rendering
+- 720×720 window (120×120 grid, 6px cells)
+- Interactive: pause, randomize, clear, mouse drawing
+- Cyan/teal cells on dark background
 
 **Game of Life Rules:**
 - Live cell with 2-3 live neighbors survives
