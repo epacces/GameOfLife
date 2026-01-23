@@ -1,6 +1,7 @@
 /*
  * Tests for Game of Life - C implementation
- * Compile: gcc -o test_game test_game.c
+ * Uses a smaller grid (5x5) for easier test verification
+ * Compile: make test_game
  * Run: ./test_game
  */
 
@@ -9,35 +10,35 @@
 #include <string.h>
 #include <assert.h>
 
-/* Use smaller grid for testing */
-#define GRID_COLS 5
-#define GRID_ROWS 5
-#define GRID_SIZE (GRID_COLS * GRID_ROWS)
-#define ALIVE '*'
-#define DEAD '.'
+/* Use smaller grid for testing - must define before including game_core.h style types */
+#define TEST_GRID_COLS 5
+#define TEST_GRID_ROWS 5
+#define TEST_GRID_SIZE (TEST_GRID_COLS * TEST_GRID_ROWS)
 
-/* Core functions (same logic as game.c) */
+typedef enum { DEAD = 0, ALIVE = 1 } CellState;
+
+/* Core functions with test grid size */
 int pos_to_index(int x, int y) {
-    x = (x % GRID_COLS + GRID_COLS) % GRID_COLS;
-    y = (y % GRID_ROWS + GRID_ROWS) % GRID_ROWS;
-    return y * GRID_COLS + x;
+    x = (x % TEST_GRID_COLS + TEST_GRID_COLS) % TEST_GRID_COLS;
+    y = (y % TEST_GRID_ROWS + TEST_GRID_ROWS) % TEST_GRID_ROWS;
+    return y * TEST_GRID_COLS + x;
 }
 
-void set_cell(char *grid, int x, int y, const char state) {
+void set_cell(CellState *grid, int x, int y, CellState state) {
     grid[pos_to_index(x, y)] = state;
 }
 
-char get_cell(const char *grid, const int x, const int y) {
+CellState get_cell(const CellState *grid, int x, int y) {
     return grid[pos_to_index(x, y)];
 }
 
-void fill_grid(char *grid, char state) {
-    for (int i = 0; i < GRID_SIZE; i++) {
+void fill_grid(CellState *grid, CellState state) {
+    for (int i = 0; i < TEST_GRID_SIZE; i++) {
         grid[i] = state;
     }
 }
 
-int get_alive_neighbors(const char *grid, const int x, const int y) {
+int get_alive_neighbors(const CellState *grid, int x, int y) {
     int n_alive = 0;
     for (int y_off = -1; y_off <= 1; y_off++) {
         for (int x_off = -1; x_off <= 1; x_off++) {
@@ -48,11 +49,11 @@ int get_alive_neighbors(const char *grid, const int x, const int y) {
     return n_alive;
 }
 
-void compute_new_generation(const char *curr_grid, char *next_grid) {
-    for (int y = 0; y < GRID_ROWS; y++) {
-        for (int x = 0; x < GRID_COLS; x++) {
-            char curr_state = get_cell(curr_grid, x, y);
-            char new_state = DEAD;
+void compute_new_generation(const CellState *curr_grid, CellState *next_grid) {
+    for (int y = 0; y < TEST_GRID_ROWS; y++) {
+        for (int x = 0; x < TEST_GRID_COLS; x++) {
+            CellState curr_state = get_cell(curr_grid, x, y);
+            CellState new_state = DEAD;
             int alive_count = get_alive_neighbors(curr_grid, x, y);
             if (alive_count == 3)
                 new_state = ALIVE;
@@ -80,31 +81,31 @@ static int tests_passed = 0;
 TEST(test_pos_to_index_basic) {
     assert(pos_to_index(0, 0) == 0);
     assert(pos_to_index(1, 0) == 1);
-    assert(pos_to_index(0, 1) == GRID_COLS);
-    assert(pos_to_index(2, 2) == 2 * GRID_COLS + 2);
+    assert(pos_to_index(0, 1) == TEST_GRID_COLS);
+    assert(pos_to_index(2, 2) == 2 * TEST_GRID_COLS + 2);
 }
 
 TEST(test_pos_to_index_wrapping_positive) {
     /* x wraps around */
-    assert(pos_to_index(GRID_COLS, 0) == pos_to_index(0, 0));
-    assert(pos_to_index(GRID_COLS + 1, 0) == pos_to_index(1, 0));
+    assert(pos_to_index(TEST_GRID_COLS, 0) == pos_to_index(0, 0));
+    assert(pos_to_index(TEST_GRID_COLS + 1, 0) == pos_to_index(1, 0));
     /* y wraps around */
-    assert(pos_to_index(0, GRID_ROWS) == pos_to_index(0, 0));
-    assert(pos_to_index(0, GRID_ROWS + 1) == pos_to_index(0, 1));
+    assert(pos_to_index(0, TEST_GRID_ROWS) == pos_to_index(0, 0));
+    assert(pos_to_index(0, TEST_GRID_ROWS + 1) == pos_to_index(0, 1));
 }
 
 TEST(test_pos_to_index_wrapping_negative) {
     /* negative x wraps */
-    assert(pos_to_index(-1, 0) == pos_to_index(GRID_COLS - 1, 0));
-    assert(pos_to_index(-2, 0) == pos_to_index(GRID_COLS - 2, 0));
+    assert(pos_to_index(-1, 0) == pos_to_index(TEST_GRID_COLS - 1, 0));
+    assert(pos_to_index(-2, 0) == pos_to_index(TEST_GRID_COLS - 2, 0));
     /* negative y wraps */
-    assert(pos_to_index(0, -1) == pos_to_index(0, GRID_ROWS - 1));
-    assert(pos_to_index(0, -2) == pos_to_index(0, GRID_ROWS - 2));
+    assert(pos_to_index(0, -1) == pos_to_index(0, TEST_GRID_ROWS - 1));
+    assert(pos_to_index(0, -2) == pos_to_index(0, TEST_GRID_ROWS - 2));
 }
 
 /* Tests for get_cell and set_cell */
 TEST(test_set_and_get_cell) {
-    char grid[GRID_SIZE];
+    CellState grid[TEST_GRID_SIZE];
     fill_grid(grid, DEAD);
 
     set_cell(grid, 1, 2, ALIVE);
@@ -113,27 +114,27 @@ TEST(test_set_and_get_cell) {
 }
 
 TEST(test_set_cell_with_wrapping) {
-    char grid[GRID_SIZE];
+    CellState grid[TEST_GRID_SIZE];
     fill_grid(grid, DEAD);
 
     /* Set cell using wrapped coordinates */
     set_cell(grid, -1, -1, ALIVE);
-    assert(get_cell(grid, GRID_COLS - 1, GRID_ROWS - 1) == ALIVE);
+    assert(get_cell(grid, TEST_GRID_COLS - 1, TEST_GRID_ROWS - 1) == ALIVE);
 
-    set_cell(grid, GRID_COLS, GRID_ROWS, ALIVE);
+    set_cell(grid, TEST_GRID_COLS, TEST_GRID_ROWS, ALIVE);
     assert(get_cell(grid, 0, 0) == ALIVE);
 }
 
 /* Tests for get_alive_neighbors */
 TEST(test_alive_neighbors_none) {
-    char grid[GRID_SIZE];
+    CellState grid[TEST_GRID_SIZE];
     fill_grid(grid, DEAD);
 
     assert(get_alive_neighbors(grid, 2, 2) == 0);
 }
 
 TEST(test_alive_neighbors_all_eight) {
-    char grid[GRID_SIZE];
+    CellState grid[TEST_GRID_SIZE];
     fill_grid(grid, DEAD);
 
     /* Surround center cell (2,2) with alive cells */
@@ -148,7 +149,7 @@ TEST(test_alive_neighbors_all_eight) {
 }
 
 TEST(test_alive_neighbors_does_not_count_self) {
-    char grid[GRID_SIZE];
+    CellState grid[TEST_GRID_SIZE];
     fill_grid(grid, DEAD);
 
     /* Only the cell itself is alive */
@@ -157,11 +158,11 @@ TEST(test_alive_neighbors_does_not_count_self) {
 }
 
 TEST(test_alive_neighbors_with_wrapping) {
-    char grid[GRID_SIZE];
+    CellState grid[TEST_GRID_SIZE];
     fill_grid(grid, DEAD);
 
     /* Cell at corner (0,0), place alive cells at wrapped positions */
-    set_cell(grid, GRID_COLS - 1, GRID_ROWS - 1, ALIVE);  /* wraps to top-left diagonal */
+    set_cell(grid, TEST_GRID_COLS - 1, TEST_GRID_ROWS - 1, ALIVE);  /* wraps to top-left diagonal */
     set_cell(grid, 1, 0, ALIVE);
     set_cell(grid, 0, 1, ALIVE);
 
@@ -170,7 +171,7 @@ TEST(test_alive_neighbors_with_wrapping) {
 
 /* Tests for Game of Life rules via compute_new_generation */
 TEST(test_blinker_oscillator) {
-    char grid[GRID_SIZE], next[GRID_SIZE];
+    CellState grid[TEST_GRID_SIZE], next[TEST_GRID_SIZE];
     fill_grid(grid, DEAD);
     fill_grid(next, DEAD);
 
@@ -192,7 +193,7 @@ TEST(test_blinker_oscillator) {
 }
 
 TEST(test_block_still_life) {
-    char grid[GRID_SIZE], next[GRID_SIZE];
+    CellState grid[TEST_GRID_SIZE], next[TEST_GRID_SIZE];
     fill_grid(grid, DEAD);
     fill_grid(next, DEAD);
 
@@ -217,7 +218,7 @@ TEST(test_block_still_life) {
 }
 
 TEST(test_underpopulation) {
-    char grid[GRID_SIZE], next[GRID_SIZE];
+    CellState grid[TEST_GRID_SIZE], next[TEST_GRID_SIZE];
     fill_grid(grid, DEAD);
     fill_grid(next, DEAD);
 
@@ -228,7 +229,7 @@ TEST(test_underpopulation) {
 }
 
 TEST(test_overpopulation) {
-    char grid[GRID_SIZE], next[GRID_SIZE];
+    CellState grid[TEST_GRID_SIZE], next[TEST_GRID_SIZE];
     fill_grid(grid, DEAD);
     fill_grid(next, DEAD);
 
@@ -244,7 +245,7 @@ TEST(test_overpopulation) {
 }
 
 TEST(test_reproduction) {
-    char grid[GRID_SIZE], next[GRID_SIZE];
+    CellState grid[TEST_GRID_SIZE], next[TEST_GRID_SIZE];
     fill_grid(grid, DEAD);
     fill_grid(next, DEAD);
 

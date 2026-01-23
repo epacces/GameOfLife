@@ -17,7 +17,7 @@ TESTS = tests
 RAYLIB_DIR = raylib
 RAYLIB_LIB = $(RAYLIB_DIR)/lib/libraylib.a
 RAYLIB_INCLUDE = -I$(RAYLIB_DIR)/include
-RAYLIB_LINK = $(RAYLIB_LIB) 
+RAYLIB_LINK = $(RAYLIB_LIB)
 
 # Platform-specific frameworks (macOS)
 UNAME_S := $(shell uname -s)
@@ -46,14 +46,14 @@ gui: game_gui
 gui-release: CFLAGS = $(CFLAGS_RELEASE)
 gui-release: game_gui
 
-game_of_life: $(SRC)/game.c
-	$(CC) $(CFLAGS) -o $@ $<
+game_of_life: $(SRC)/game.c $(SRC)/game_core.c $(SRC)/game_core.h
+	$(CC) $(CFLAGS) -o $@ $(SRC)/game.c $(SRC)/game_core.c
 
 test_game: $(TESTS)/test_game.c
-	$(CC) $(CFLAGS) -o $@ $<
+	$(CC) $(CFLAGS) -o $@ $(TESTS)/test_game.c
 
-game_gui: $(SRC)/game_gui.c 
-	$(CC) $(CFLAGS) -o $@ $< $(RAYLIB_INCLUDE) $(RAYLIB_LINK) $(RAYLIB_FRAMEWORKS)
+game_gui: $(SRC)/game_gui.c $(SRC)/game_core.c $(SRC)/game_core.h
+	$(CC) $(CFLAGS) -o $@ $(SRC)/game_gui.c $(SRC)/game_core.c $(RAYLIB_INCLUDE) $(RAYLIB_LINK) $(RAYLIB_FRAMEWORKS)
 
 run: game_of_life
 	./game_of_life
